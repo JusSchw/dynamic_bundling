@@ -60,8 +60,8 @@ checksum = "ace50bade8e6234aa140d9a2f552bbee1db4d353f69b8217bc503490fc1a9f26"
 
 [[package]]
 name = "bevy_ecs"
-version = "0.15.0-dev"
-source = "git+https://github.com/bevyengine/bevy?branch=main#50d38f2757e7205632fcab0cc92e79831a307ae0"
+version = "0.15.0-rc.1"
+source = "git+https://github.com/bevyengine/bevy?branch=release-0.15.0#119e37d2ae86a1f3ae04a7ce812c2a9594fa10ea"
 dependencies = [
  "bevy_ecs_macros",
  "bevy_ptr",
@@ -80,8 +80,8 @@ dependencies = [
 
 [[package]]
 name = "bevy_ecs_macros"
-version = "0.15.0-dev"
-source = "git+https://github.com/bevyengine/bevy?branch=main#50d38f2757e7205632fcab0cc92e79831a307ae0"
+version = "0.15.0-rc.1"
+source = "git+https://github.com/bevyengine/bevy?branch=release-0.15.0#119e37d2ae86a1f3ae04a7ce812c2a9594fa10ea"
 dependencies = [
  "bevy_macro_utils",
  "proc-macro2",
@@ -91,8 +91,8 @@ dependencies = [
 
 [[package]]
 name = "bevy_macro_utils"
-version = "0.15.0-dev"
-source = "git+https://github.com/bevyengine/bevy?branch=main#50d38f2757e7205632fcab0cc92e79831a307ae0"
+version = "0.15.0-rc.1"
+source = "git+https://github.com/bevyengine/bevy?branch=release-0.15.0#119e37d2ae86a1f3ae04a7ce812c2a9594fa10ea"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -102,13 +102,13 @@ dependencies = [
 
 [[package]]
 name = "bevy_ptr"
-version = "0.15.0-dev"
-source = "git+https://github.com/bevyengine/bevy?branch=main#50d38f2757e7205632fcab0cc92e79831a307ae0"
+version = "0.15.0-rc.1"
+source = "git+https://github.com/bevyengine/bevy?branch=release-0.15.0#119e37d2ae86a1f3ae04a7ce812c2a9594fa10ea"
 
 [[package]]
 name = "bevy_reflect"
-version = "0.15.0-dev"
-source = "git+https://github.com/bevyengine/bevy?branch=main#50d38f2757e7205632fcab0cc92e79831a307ae0"
+version = "0.15.0-rc.1"
+source = "git+https://github.com/bevyengine/bevy?branch=release-0.15.0#119e37d2ae86a1f3ae04a7ce812c2a9594fa10ea"
 dependencies = [
  "assert_type_match",
  "bevy_ptr",
@@ -124,8 +124,8 @@ dependencies = [
 
 [[package]]
 name = "bevy_reflect_derive"
-version = "0.15.0-dev"
-source = "git+https://github.com/bevyengine/bevy?branch=main#50d38f2757e7205632fcab0cc92e79831a307ae0"
+version = "0.15.0-rc.1"
+source = "git+https://github.com/bevyengine/bevy?branch=release-0.15.0#119e37d2ae86a1f3ae04a7ce812c2a9594fa10ea"
 dependencies = [
  "bevy_macro_utils",
  "proc-macro2",
@@ -136,8 +136,8 @@ dependencies = [
 
 [[package]]
 name = "bevy_tasks"
-version = "0.15.0-dev"
-source = "git+https://github.com/bevyengine/bevy?branch=main#50d38f2757e7205632fcab0cc92e79831a307ae0"
+version = "0.15.0-rc.1"
+source = "git+https://github.com/bevyengine/bevy?branch=release-0.15.0#119e37d2ae86a1f3ae04a7ce812c2a9594fa10ea"
 dependencies = [
  "async-executor",
  "futures-channel",
@@ -148,8 +148,8 @@ dependencies = [
 
 [[package]]
 name = "bevy_utils"
-version = "0.15.0-dev"
-source = "git+https://github.com/bevyengine/bevy?branch=main#50d38f2757e7205632fcab0cc92e79831a307ae0"
+version = "0.15.0-rc.1"
+source = "git+https://github.com/bevyengine/bevy?branch=release-0.15.0#119e37d2ae86a1f3ae04a7ce812c2a9594fa10ea"
 dependencies = [
  "ahash",
  "bevy_utils_proc_macros",
@@ -162,8 +162,8 @@ dependencies = [
 
 [[package]]
 name = "bevy_utils_proc_macros"
-version = "0.15.0-dev"
-source = "git+https://github.com/bevyengine/bevy?branch=main#50d38f2757e7205632fcab0cc92e79831a307ae0"
+version = "0.15.0-rc.1"
+source = "git+https://github.com/bevyengine/bevy?branch=release-0.15.0#119e37d2ae86a1f3ae04a7ce812c2a9594fa10ea"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -460,9 +460,9 @@ checksum = "bda66fc9667c18cb2758a2ac84d1167245054bcf85d5d1aaa6923f45801bdd02"
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.88"
+version = "1.0.89"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c3a7fc5db1e57d5a779a352c8cdb57b29aa4c40cc69c3a68a7fedc815fbf2f9"
+checksum = "f139b0662de085916d1fb67d2b4169d1addddda1919e696f3252b740b629986e"
 dependencies = [
  "unicode-ident",
 ]
@@ -478,18 +478,18 @@ dependencies = [
 
 [[package]]
 name = "serde"
-version = "1.0.211"
+version = "1.0.213"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1ac55e59090389fb9f0dd9e0f3c09615afed1d19094284d0b200441f13550793"
+checksum = "3ea7893ff5e2466df8d720bb615088341b295f849602c6956047f8f80f0e9bc1"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.211"
+version = "1.0.213"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "54be4f245ce16bc58d57ef2716271d0d4519e0f6defa147f6e081005bcb278ff"
+checksum = "7e85ad2009c50b58e87caa8cd6dac16bdf511bbfb7af6c33df902396aa480fa5"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -513,9 +513,9 @@ checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 
 [[package]]
 name = "syn"
-version = "2.0.82"
+version = "2.0.83"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83540f837a8afc019423a8edb95b52a8effe46957ee402287f4292fae35be021"
+checksum = "01680f5d178a369f817f43f3d399650272873a8e7588a7872f7e90edc71d60a3"
 dependencies = [
  "proc-macro2",
  "quote",
