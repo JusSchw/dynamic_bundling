@@ -74,7 +74,7 @@ impl Component for DynBundle {
 
     fn register_component_hooks(hooks: &mut ComponentHooks) {
         hooks.on_add(|mut world, entity, _| {
-            world.commands().add(DynBundleCommand(entity));
+            world.commands().queue(DynBundleCommand(entity));
         });
     }
 }
@@ -83,7 +83,7 @@ struct DynBundleCommand(Entity);
 
 impl Command for DynBundleCommand {
     fn apply(self, world: &mut World) {
-        let Some(mut entity_mut) = world.get_entity_mut(self.0) else {
+        let Ok(mut entity_mut) = world.get_entity_mut(self.0) else {
             #[cfg(debug_assertions)]
             panic!("Entity with DynBundle component not found");
 
