@@ -79,6 +79,16 @@ impl Component for DynBundle {
     }
 }
 
+pub trait IntoDynBundle {
+    fn into_dyn_bundle(self) -> DynBundle;
+}
+
+impl<B: Bundle + Clone> IntoDynBundle for B {
+    fn into_dyn_bundle(self) -> DynBundle {
+        DynBundle::new(self)
+    }
+}
+
 struct DynBundleCommand(Entity);
 
 impl Command for DynBundleCommand {
