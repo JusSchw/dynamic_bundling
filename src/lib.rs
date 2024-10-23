@@ -24,7 +24,7 @@ impl DynBundle {
         }
     }
 
-    pub fn add<B: Bundle + Clone>(&self, bundle: B) -> DynBundle {
+    pub fn insert<B: Bundle + Clone>(&self, bundle: B) -> Self {
         DynBundle {
             bundle: Arc::new(move |entity: &mut EntityWorldMut| {
                 entity.insert(bundle.clone());
@@ -33,12 +33,22 @@ impl DynBundle {
         }
     }
 
-    pub fn del<B: Bundle + Clone>(&self) -> DynBundle {
+    pub fn remove<B: Bundle + Clone>(&self) -> Self {
         DynBundle {
             bundle: Arc::new(move |entity: &mut EntityWorldMut| {
                 entity.remove::<B>();
             }),
             parent: Some(Arc::new(self.clone())),
+        }
+    }
+
+    pub fn append(&self, dyn_bundle: DynBundle) -> Self {
+        DynBundle {
+            bundle: dyn_bundle.bundle.clone(),
+            parent: match dyn_bundle.parent {
+                Some(parent) => Some(Arc::new((*parent).append(self.clone()))),
+                None => Some(Arc::new(self.clone())),
+            },
         }
     }
 
@@ -111,7 +121,7 @@ mod tests {
     }
 
     #[test]
-    fn add_bundle() {
+    fn insert_bundle() {
         let mut world = World::default();
 
         let bundle = DynBundle::new(BundleAB { a: A, b: B });
@@ -123,7 +133,7 @@ mod tests {
         assert!(world.entity(entity).contains::<A>());
         assert!(world.entity(entity).contains::<B>());
 
-        let bundle_with_c = bundle.add(C);
+        let bundle_with_c = bundle.insert(C);
 
         let new_entity = world.spawn(bundle_with_c).id();
 
@@ -135,7 +145,7 @@ mod tests {
     }
 
     #[test]
-    fn delete_bundle() {
+    fn remove_bundle() {
         let mut world = World::default();
 
         let bundle = DynBundle::new(BundleAB { a: A, b: B });
@@ -147,7 +157,7 @@ mod tests {
         assert!(world.entity(entity).contains::<A>());
         assert!(world.entity(entity).contains::<B>());
 
-        let bundle_without_a = bundle.del::<A>();
+        let bundle_without_a = bundle.remove::<A>();
 
         let new_entity = world.spawn(bundle_without_a).id();
 
@@ -158,10 +168,10 @@ mod tests {
     }
 
     #[test]
-    fn add_and_delete_bundle() {
+    fn insert_and_remove_bundle() {
         let mut world = World::default();
 
-        let bundle = DynBundle::new(A);
+        let bundle = DynBundle::new(A).insert(B);
 
         let entity = world.spawn(bundle.clone()).id();
 
@@ -170,15 +180,14 @@ mod tests {
         assert!(world.entity(entity).contains::<A>());
         assert!(world.entity(entity).contains::<B>());
 
-        let bundle_with_c = bundle.add(C);
+        let new_bundle = bundle.remove::<B>();
 
-        let new_entity = world.spawn(bundle_with_c).id();
+        let new_entity = world.spawn(new_bundle).id();
 
         world.flush();
 
         assert!(world.entity(new_entity).contains::<A>());
-        assert!(world.entity(new_entity).contains::<B>());
-        assert!(world.entity(new_entity).contains::<C>());
+        assert!(!world.entity(new_entity).contains::<B>());
     }
 
     #[test]
@@ -187,7 +196,7 @@ mod tests {
 
         let parent_bundle = DynBundle::new(A);
 
-        let child_bundle = parent_bundle.add(B);
+        let child_bundle = parent_bundle.insert(B);
 
         let parent = world.spawn(parent_bundle).id();
         let child = world.spawn(child_bundle).id();
@@ -195,6 +204,7 @@ mod tests {
         world.flush();
 
         assert!(world.entity(parent).contains::<A>());
+        assert!(!world.entity(parent).contains::<B>());
 
         assert!(world.entity(child).contains::<A>());
         assert!(world.entity(child).contains::<B>());
@@ -206,8 +216,8 @@ mod tests {
 
         let parent_bundle = DynBundle::new(A);
 
-        let child_bundle_1 = parent_bundle.add(B);
-        let child_bundle_2 = parent_bundle.add(C);
+        let child_bundle_1 = parent_bundle.insert(B);
+        let child_bundle_2 = parent_bundle.insert(C);
 
         let child_1 = world.spawn(child_bundle_1).id();
         let child_2 = world.spawn(child_bundle_2).id();
@@ -216,8 +226,10 @@ mod tests {
 
         assert!(world.entity(child_1).contains::<A>());
         assert!(world.entity(child_1).contains::<B>());
+        assert!(!world.entity(child_1).contains::<C>());
 
         assert!(world.entity(child_2).contains::<A>());
+        assert!(!world.entity(child_2).contains::<B>());
         assert!(world.entity(child_2).contains::<C>());
     }
 
@@ -226,7 +238,6 @@ mod tests {
         let mut world = World::default();
 
         let a_bundle = DynBundle::new(A);
-
         let abc_bundle = DynBundle::new((a_bundle, B, C));
 
         let entity = world.spawn(abc_bundle).id();
@@ -235,6 +246,23 @@ mod tests {
 
         assert!(world.entity(entity).contains::<A>());
         assert!(world.entity(entity).contains::<B>());
+        assert!(world.entity(entity).contains::<C>());
+    }
+
+    #[test]
+    fn append_dyn_bundle() {
+        let mut world = World::default();
+
+        let first_bundle = DynBundle::new(BundleAB { a: A, b: B }).remove::<A>();
+        let second_bundle = DynBundle::new(C).remove::<B>();
+        let appended_bundle = first_bundle.append(second_bundle);
+
+        let entity = world.spawn(appended_bundle).id();
+
+        world.flush();
+
+        assert!(!world.entity(entity).contains::<A>());
+        assert!(!world.entity(entity).contains::<B>());
         assert!(world.entity(entity).contains::<C>());
     }
 }
