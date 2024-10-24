@@ -52,6 +52,13 @@ impl DynBundle {
         }
     }
 
+    pub fn append_some(&self, opt_bundle: Option<DynBundle>) -> Self {
+        if let Some(bundle) = opt_bundle {
+            self.append(bundle);
+        }
+        self.clone()
+    }
+
     fn apply(&self, entity_mut: &mut EntityWorldMut) {
         if let Some(ref parent) = self.parent {
             parent.apply(entity_mut);
