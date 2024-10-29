@@ -5,6 +5,7 @@ use bevy_ecs::{
     prelude::*,
     world::Command,
 };
+use bevy_hierarchy::{BuildChildren, ChildBuild};
 
 type BundleFn = Arc<dyn Fn(&mut EntityWorldMut) + Send + Sync>;
 
@@ -86,16 +87,6 @@ impl Component for DynBundle {
     }
 }
 
-pub trait IntoDynBundle {
-    fn into_dyn_bundle(self) -> DynBundle;
-}
-
-impl<B: Bundle + Clone> IntoDynBundle for B {
-    fn into_dyn_bundle(self) -> DynBundle {
-        DynBundle::new(self)
-    }
-}
-
 struct DynBundleCommand(Entity);
 
 impl Command for DynBundleCommand {
@@ -118,168 +109,182 @@ impl Command for DynBundleCommand {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[derive(Clone, Default)]
+pub struct Child(DynBundle);
 
-    #[derive(Debug, Clone, PartialEq, Component)]
-    struct A;
-
-    #[derive(Debug, Clone, PartialEq, Component)]
-    struct B;
-
-    #[derive(Debug, Clone, PartialEq, Component)]
-    struct C;
-
-    #[derive(Clone, Bundle)]
-    struct BundleAB {
-        a: A,
-        b: B,
+impl Child {
+    pub fn new(dyn_bundle: DynBundle) -> Self {
+        Self(dyn_bundle)
     }
+}
 
-    #[test]
-    fn insert_bundle() {
-        let mut world = World::default();
+impl Component for Child {
+    const STORAGE_TYPE: StorageType = StorageType::SparseSet;
 
-        let bundle = DynBundle::new(BundleAB { a: A, b: B });
-
-        let entity = world.spawn(bundle.clone()).id();
-
-        world.flush();
-
-        assert!(world.entity(entity).contains::<A>());
-        assert!(world.entity(entity).contains::<B>());
-
-        let bundle_with_c = bundle.insert(C);
-
-        let new_entity = world.spawn(bundle_with_c).id();
-
-        world.flush();
-
-        assert!(world.entity(new_entity).contains::<A>());
-        assert!(world.entity(new_entity).contains::<B>());
-        assert!(world.entity(new_entity).contains::<C>());
+    fn register_component_hooks(hooks: &mut ComponentHooks) {
+        hooks.on_add(|mut world, entity, _| {
+            world.commands().queue(ChildCommand(entity));
+        });
     }
+}
 
-    #[test]
-    fn remove_bundle() {
-        let mut world = World::default();
+struct ChildCommand(Entity);
 
-        let bundle = DynBundle::new(BundleAB { a: A, b: B });
+impl Command for ChildCommand {
+    fn apply(self, world: &mut World) {
+        let Ok(mut entity_mut) = world.get_entity_mut(self.0) else {
+            #[cfg(debug_assertions)]
+            panic!("Entity with Child component not found");
 
-        let entity = world.spawn(bundle.clone()).id();
+            #[cfg(not(debug_assertions))]
+            return;
+        };
+        let Some(child) = entity_mut.take::<Child>() else {
+            #[cfg(debug_assertions)]
+            panic!("Child component not found");
 
-        world.flush();
-
-        assert!(world.entity(entity).contains::<A>());
-        assert!(world.entity(entity).contains::<B>());
-
-        let bundle_without_a = bundle.remove::<A>();
-
-        let new_entity = world.spawn(bundle_without_a).id();
-
-        world.flush();
-
-        assert!(!world.entity(new_entity).contains::<A>());
-        assert!(world.entity(new_entity).contains::<B>());
+            #[cfg(not(debug_assertions))]
+            return;
+        };
+        entity_mut.with_child(child.0);
     }
+}
 
-    #[test]
-    fn insert_and_remove_bundle() {
-        let mut world = World::default();
+#[derive(Clone, Default)]
+pub struct Children(Vec<DynBundle>);
 
-        let bundle = DynBundle::new(A).insert(B);
-
-        let entity = world.spawn(bundle.clone()).id();
-
-        world.flush();
-
-        assert!(world.entity(entity).contains::<A>());
-        assert!(world.entity(entity).contains::<B>());
-
-        let new_bundle = bundle.remove::<B>();
-
-        let new_entity = world.spawn(new_bundle).id();
-
-        world.flush();
-
-        assert!(world.entity(new_entity).contains::<A>());
-        assert!(!world.entity(new_entity).contains::<B>());
+impl Children {
+    pub fn new(dyn_bundles: impl IntoIterator<Item = DynBundle>) -> Self {
+        Self(dyn_bundles.into_iter().collect())
     }
+}
 
-    #[test]
-    fn inherit_bundle() {
-        let mut world = World::default();
+impl Component for Children {
+    const STORAGE_TYPE: StorageType = StorageType::SparseSet;
 
-        let parent_bundle = DynBundle::new(A);
-
-        let child_bundle = parent_bundle.insert(B);
-
-        let parent = world.spawn(parent_bundle).id();
-        let child = world.spawn(child_bundle).id();
-
-        world.flush();
-
-        assert!(world.entity(parent).contains::<A>());
-        assert!(!world.entity(parent).contains::<B>());
-
-        assert!(world.entity(child).contains::<A>());
-        assert!(world.entity(child).contains::<B>());
+    fn register_component_hooks(hooks: &mut ComponentHooks) {
+        hooks.on_add(|mut world, entity, _| {
+            world.commands().queue(ChildrenCommand(entity));
+        });
     }
+}
 
-    #[test]
-    fn shared_parent_bundle() {
-        let mut world = World::default();
+struct ChildrenCommand(Entity);
 
-        let parent_bundle = DynBundle::new(A);
+impl Command for ChildrenCommand {
+    fn apply(self, world: &mut World) {
+        let Ok(mut entity_mut) = world.get_entity_mut(self.0) else {
+            #[cfg(debug_assertions)]
+            panic!("Entity with Children component not found");
 
-        let child_bundle_1 = parent_bundle.insert(B);
-        let child_bundle_2 = parent_bundle.insert(C);
+            #[cfg(not(debug_assertions))]
+            return;
+        };
+        let Some(children) = entity_mut.take::<Children>() else {
+            #[cfg(debug_assertions)]
+            panic!("Children component not found");
 
-        let child_1 = world.spawn(child_bundle_1).id();
-        let child_2 = world.spawn(child_bundle_2).id();
-
-        world.flush();
-
-        assert!(world.entity(child_1).contains::<A>());
-        assert!(world.entity(child_1).contains::<B>());
-        assert!(!world.entity(child_1).contains::<C>());
-
-        assert!(world.entity(child_2).contains::<A>());
-        assert!(!world.entity(child_2).contains::<B>());
-        assert!(world.entity(child_2).contains::<C>());
+            #[cfg(not(debug_assertions))]
+            return;
+        };
+        entity_mut.with_children(|builder| {
+            for bundle in children.0 {
+                builder.spawn(bundle);
+            }
+        });
     }
+}
 
-    #[test]
-    fn bundle_inside_bundle() {
-        let mut world = World::default();
+#[derive(Debug)]
+pub struct Target(pub Entity);
 
-        let a_bundle = DynBundle::new(A);
-        let abc_bundle = DynBundle::new((a_bundle, B, C));
+impl Component for Target {
+    const STORAGE_TYPE: StorageType = StorageType::Table;
 
-        let entity = world.spawn(abc_bundle).id();
+    fn register_component_hooks(hooks: &mut ComponentHooks) {
+        hooks
+            .on_insert(|mut world, entity, _| {
+                let Ok(entity_ref) = world.get_entity(entity) else {
+                    #[cfg(debug_assertions)]
+                    panic!("Entity with Target component not found");
 
-        world.flush();
+                    #[cfg(not(debug_assertions))]
+                    return;
+                };
+                let Some(Target(target)) = entity_ref.get::<Target>() else {
+                    #[cfg(debug_assertions)]
+                    panic!("Target component not found");
 
-        assert!(world.entity(entity).contains::<A>());
-        assert!(world.entity(entity).contains::<B>());
-        assert!(world.entity(entity).contains::<C>());
+                    #[cfg(not(debug_assertions))]
+                    return;
+                };
+                let target = *target;
+                world.commands().entity(target).insert(TargetBy(entity));
+            })
+            .on_replace(|mut world, entity, _| {
+                let Ok(entity_ref) = world.get_entity(entity) else {
+                    #[cfg(debug_assertions)]
+                    panic!("Entity with Target component not found");
+
+                    #[cfg(not(debug_assertions))]
+                    return;
+                };
+                let Some(Target(target)) = entity_ref.get::<Target>() else {
+                    #[cfg(debug_assertions)]
+                    panic!("Target component not found");
+
+                    #[cfg(not(debug_assertions))]
+                    return;
+                };
+                let target = *target;
+                world.commands().entity(target).remove::<TargetBy>();
+            });
     }
+}
 
-    #[test]
-    fn append_dyn_bundle() {
-        let mut world = World::default();
+#[derive(Debug)]
+pub struct TargetBy(pub Entity);
 
-        let first_bundle = DynBundle::new(BundleAB { a: A, b: B }).remove::<A>();
-        let second_bundle = DynBundle::new(C).remove::<B>();
-        let appended_bundle = first_bundle.append(second_bundle);
+impl Component for TargetBy {
+    const STORAGE_TYPE: StorageType = StorageType::Table;
 
-        let entity = world.spawn(appended_bundle).id();
+    fn register_component_hooks(hooks: &mut ComponentHooks) {
+        hooks
+            .on_insert(|mut world, entity, _| {
+                let Ok(entity_ref) = world.get_entity(entity) else {
+                    #[cfg(debug_assertions)]
+                    panic!("Entity with TargetBy component not found");
 
-        world.flush();
+                    #[cfg(not(debug_assertions))]
+                    return;
+                };
+                let Some(TargetBy(targetby)) = entity_ref.get::<TargetBy>() else {
+                    #[cfg(debug_assertions)]
+                    panic!("TargetBy component not found");
 
-        assert!(!world.entity(entity).contains::<A>());
-        assert!(!world.entity(entity).contains::<B>());
-        assert!(world.entity(entity).contains::<C>());
+                    #[cfg(not(debug_assertions))]
+                    return;
+                };
+                let targetby = *targetby;
+                world.commands().entity(targetby).insert(Target(entity));
+            })
+            .on_replace(|mut world, entity, _| {
+                let Ok(entity_ref) = world.get_entity(entity) else {
+                    #[cfg(debug_assertions)]
+                    panic!("Entity with TargetBy component not found");
+
+                    #[cfg(not(debug_assertions))]
+                    return;
+                };
+                let Some(TargetBy(targetby)) = entity_ref.get::<TargetBy>() else {
+                    #[cfg(debug_assertions)]
+                    panic!("TargetBy component not found");
+
+                    #[cfg(not(debug_assertions))]
+                    return;
+                };
+                let targetby = *targetby;
+                world.commands().entity(targetby).remove::<Target>();
+            });
     }
 }

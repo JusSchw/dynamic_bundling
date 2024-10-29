@@ -5,3 +5,4 @@ edition = "2021"
 
 [dependencies]
 bevy_ecs = { git = "https://github.com/bevyengine/bevy", branch = "release-0.15.0" }
+bevy_hierarchy = { git = "https://github.com/bevyengine/bevy", branch = "release-0.15.0" }
