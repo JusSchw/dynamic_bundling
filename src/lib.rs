@@ -219,7 +219,13 @@ impl Component for Target {
                     return;
                 };
                 let target = *target;
-                world.commands().entity(target).insert(TargetBy(entity));
+                if !world
+                    .entity(target)
+                    .get::<TargetBy>()
+                    .is_some_and(|t| t.0 == entity)
+                {
+                    world.commands().entity(target).insert(TargetBy(entity));
+                }
             })
             .on_replace(|mut world, entity, _| {
                 let Ok(entity_ref) = world.get_entity(entity) else {
@@ -266,7 +272,13 @@ impl Component for TargetBy {
                     return;
                 };
                 let targetby = *targetby;
-                world.commands().entity(targetby).insert(Target(entity));
+                if !world
+                    .entity(targetby)
+                    .get::<Target>()
+                    .is_some_and(|t| t.0 == entity)
+                {
+                    world.commands().entity(targetby).insert(Target(entity));
+                }
             })
             .on_replace(|mut world, entity, _| {
                 let Ok(entity_ref) = world.get_entity(entity) else {
