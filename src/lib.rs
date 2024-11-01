@@ -219,11 +219,13 @@ impl Component for Target {
                     return;
                 };
                 let target = *target;
-                if world
-                    .get_entity(target)
-                    .is_ok_and(|r| r.get::<TargetBy>().is_some_and(|t| t.0 != entity))
-                {
-                    world.commands().entity(target).insert(TargetBy(entity));
+                let existing_target_by =
+                    (world.get_entity(target).ok()).and_then(|t| t.get::<TargetBy>());
+                if existing_target_by.is_none() {
+                    world.commands().get_entity(target).and_then(|mut c| {
+                        c.insert(TargetBy(entity));
+                        Some(())
+                    });
                 }
             })
             .on_replace(|mut world: DeferredWorld<'_>, entity: Entity, _| {
@@ -274,11 +276,13 @@ impl Component for TargetBy {
                     return;
                 };
                 let targetby = *targetby;
-                if world
-                    .get_entity(targetby)
-                    .is_ok_and(|r| r.get::<TargetBy>().is_some_and(|t| t.0 != entity))
-                {
-                    world.commands().entity(targetby).insert(Target(entity));
+                let existing_target_by =
+                    (world.get_entity(targetby).ok()).and_then(|t| t.get::<TargetBy>());
+                if existing_target_by.is_none() {
+                    world.commands().get_entity(targetby).and_then(|mut c| {
+                        c.insert(Target(entity));
+                        Some(())
+                    });
                 }
             })
             .on_replace(|mut world: DeferredWorld<'_>, entity: Entity, _| {
