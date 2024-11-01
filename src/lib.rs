@@ -219,10 +219,9 @@ impl Component for Target {
                     return;
                 };
                 let target = *target;
-                if !world
-                    .entity(target)
-                    .get::<TargetBy>()
-                    .is_some_and(|t| t.0 == entity)
+                if world
+                    .get_entity(target)
+                    .is_ok_and(|r| r.get::<TargetBy>().is_some_and(|t| t.0 != entity))
                 {
                     world.commands().entity(target).insert(TargetBy(entity));
                 }
@@ -243,7 +242,10 @@ impl Component for Target {
                     return;
                 };
                 let target = *target;
-                world.commands().entity(target).remove::<TargetBy>();
+                world.commands().get_entity(target).and_then(|mut c| {
+                    c.remove::<TargetBy>();
+                    Some(())
+                });
             });
     }
 }
@@ -272,10 +274,9 @@ impl Component for TargetBy {
                     return;
                 };
                 let targetby = *targetby;
-                if !world
-                    .entity(targetby)
-                    .get::<Target>()
-                    .is_some_and(|t| t.0 == entity)
+                if world
+                    .get_entity(targetby)
+                    .is_ok_and(|r| r.get::<TargetBy>().is_some_and(|t| t.0 != entity))
                 {
                     world.commands().entity(targetby).insert(Target(entity));
                 }
@@ -296,7 +297,10 @@ impl Component for TargetBy {
                     return;
                 };
                 let targetby = *targetby;
-                world.commands().entity(targetby).remove::<Target>();
+                world.commands().get_entity(targetby).and_then(|mut c| {
+                    c.remove::<Target>();
+                    Some(())
+                });
             });
     }
 }
