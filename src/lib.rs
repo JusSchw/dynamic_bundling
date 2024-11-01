@@ -221,8 +221,11 @@ impl Component for Target {
                 let target = *target;
 
                 if let Ok(target_ref) = world.get_entity(target) {
-                    let is_target = target_ref.get::<TargetBy>().is_some_and(|t| t.0 == entity);
-                    if !is_target {
+                    if let Some(TargetBy(targetby)) = target_ref.get::<TargetBy>() {
+                        if *targetby != entity {
+                            world.commands().entity(target).insert(TargetBy(entity));
+                        }
+                    } else {
                         world.commands().entity(target).insert(TargetBy(entity));
                     }
                 }
@@ -277,8 +280,11 @@ impl Component for TargetBy {
                 let targetby = *targetby;
 
                 if let Ok(target_ref) = world.get_entity(targetby) {
-                    let is_target = target_ref.get::<TargetBy>().is_some_and(|t| t.0 == entity);
-                    if !is_target {
+                    if let Some(Target(target)) = target_ref.get::<Target>() {
+                        if *target != entity {
+                            world.commands().entity(targetby).insert(Target(entity));
+                        }
+                    } else {
                         world.commands().entity(targetby).insert(Target(entity));
                     }
                 }
