@@ -23,18 +23,18 @@ impl DynBundle {
     }
 
     pub fn new_add<B: Bundle + Clone>(bundle: B) -> Self {
-        DynBundle::default().insert(bundle)
+        DynBundle::default().add(bundle)
     }
 
     pub fn new_del<B: Bundle + Clone>(&self) -> Self {
-        DynBundle::default().remove::<B>()
+        DynBundle::default().del::<B>()
     }
 
     pub fn new_many(iter: impl IntoIterator<Item = impl IntoDynBundle>) -> Self {
         DynBundle::default().append_many(iter)
     }
 
-    pub fn insert<B: Bundle + Clone>(&self, bundle: B) -> Self {
+    pub fn add<B: Bundle + Clone>(&self, bundle: B) -> Self {
         DynBundle {
             bundle: Arc::new(move |entity: &mut EntityWorldMut| {
                 entity.insert(bundle.clone());
@@ -43,7 +43,7 @@ impl DynBundle {
         }
     }
 
-    pub fn remove<B: Bundle + Clone>(&self) -> Self {
+    pub fn del<B: Bundle + Clone>(&self) -> Self {
         DynBundle {
             bundle: Arc::new(move |entity: &mut EntityWorldMut| {
                 entity.remove::<B>();
