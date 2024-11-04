@@ -18,13 +18,20 @@ pub struct DynBundle {
 }
 
 impl DynBundle {
-    pub fn new<B: Bundle + Clone>(bundle: B) -> Self {
-        DynBundle {
-            bundle: Arc::new(move |entity: &mut EntityWorldMut| {
-                entity.insert(bundle.clone());
-            }),
-            parent: None,
-        }
+    pub fn new() -> Self {
+        DynBundle::default()
+    }
+
+    pub fn new_add<B: Bundle + Clone>(bundle: B) -> Self {
+        DynBundle::default().insert(bundle)
+    }
+
+    pub fn new_del<B: Bundle + Clone>(&self) -> Self {
+        DynBundle::default().remove::<B>()
+    }
+
+    pub fn new_many(iter: impl IntoIterator<Item = impl IntoDynBundle>) -> Self {
+        DynBundle::default().append_many(iter)
     }
 
     pub fn insert<B: Bundle + Clone>(&self, bundle: B) -> Self {
@@ -63,6 +70,12 @@ impl DynBundle {
         self.clone()
     }
 
+    pub fn append_many(&self, iter: impl IntoIterator<Item = impl IntoDynBundle>) -> Self {
+        iter.into_iter().fold(self.clone(), |parent, child| {
+            parent.append(child.into_dyn_bundle())
+        })
+    }
+
     fn apply(&self, entity_mut: &mut EntityWorldMut) {
         if let Some(ref parent) = self.parent {
             parent.apply(entity_mut);
@@ -86,7 +99,7 @@ pub trait IntoDynBundle {
 
 impl<B: Bundle + Clone> IntoDynBundle for B {
     default fn into_dyn_bundle(self) -> DynBundle {
-        DynBundle::new(self.clone())
+        DynBundle::new_add(self.clone())
     }
 }
 
@@ -119,7 +132,7 @@ impl Command for DynBundleCommand {
         };
         let Some(dyn_bundle) = entity_mut.take::<DynBundle>() else {
             #[cfg(debug_assertions)]
-            panic!("DynBundle component not found");
+            panic!("DynBundle component not found on entity");
 
             #[cfg(not(debug_assertions))]
             return;
