@@ -143,8 +143,23 @@ impl Command for DynBundleCommand {
 
 #[macro_export]
 macro_rules! dynb {
-    ( $($method:ident $( :: < $t:ty > )? ( $($args:tt)* ) ),* $(,)? ) => {{
+    () => {
         DynBundle::new()
-            $( .$method $( :: <$t> )? ( $($args)* ) )*
+    };
+
+    ( $method:ident $( :: < $t:ty > )? ( $($args:tt)* ), $( $rest:tt )* ) => {{
+        dynb!().$method $( :: <$t> )? ( $($args)* ).append(dynb!($( $rest )*))
+    }};
+
+    ( $item:expr, $( $rest:tt )* ) => {{
+        dynb!().append($item).append(dynb!($( $rest )*))
+    }};
+
+    ( $method:ident $( :: < $t:ty > )? ( $($args:tt)* ) ) => {{
+        dynb!().$method $( :: <$t> )? ( $($args)* )
+    }};
+
+    ( $item:expr ) => {{
+        dynb!().append($item)
     }};
 }
