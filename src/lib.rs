@@ -53,7 +53,7 @@ impl DynBundle {
     }
 
     pub fn append(&self, dyn_bundle: impl IntoDynBundle) -> Self {
-        let dyn_bundle = dyn_bundle.into_dyn_bundle();
+        let dyn_bundle = dyn_bundle.into_dynb();
         DynBundle {
             bundle: dyn_bundle.bundle.clone(),
             parent: match dyn_bundle.parent {
@@ -65,14 +65,14 @@ impl DynBundle {
 
     pub fn append_some(&self, opt_bundle: Option<impl IntoDynBundle>) -> Self {
         if let Some(bundle) = opt_bundle {
-            self.append(bundle.into_dyn_bundle());
+            self.append(bundle.into_dynb());
         }
         self.clone()
     }
 
     pub fn append_many(&self, iter: impl IntoIterator<Item = impl IntoDynBundle>) -> Self {
         iter.into_iter().fold(self.clone(), |parent, child| {
-            parent.append(child.into_dyn_bundle())
+            parent.append(child.into_dynb())
         })
     }
 
@@ -94,17 +94,17 @@ impl Default for DynBundle {
 }
 
 pub trait IntoDynBundle {
-    fn into_dyn_bundle(self) -> DynBundle;
+    fn into_dynb(self) -> DynBundle;
 }
 
 impl<B: Bundle + Clone> IntoDynBundle for B {
-    default fn into_dyn_bundle(self) -> DynBundle {
+    default fn into_dynb(self) -> DynBundle {
         DynBundle::new_add(self.clone())
     }
 }
 
 impl IntoDynBundle for DynBundle {
-    fn into_dyn_bundle(self) -> DynBundle {
+    fn into_dynb(self) -> DynBundle {
         self
     }
 }
