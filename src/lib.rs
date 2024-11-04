@@ -140,3 +140,11 @@ impl Command for DynBundleCommand {
         dyn_bundle.apply(&mut entity_mut);
     }
 }
+
+#[macro_export]
+macro_rules! dynb {
+    ( $($method:ident $( :: < $t:ty > )? ( $($args:tt)* ) ),* $(,)? ) => {{
+        DynBundle::new()
+            $( .$method $( :: <$t> )? ( $($args)* ) )*
+    }};
+}
